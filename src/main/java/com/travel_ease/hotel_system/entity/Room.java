@@ -1,5 +1,6 @@
 package com.travel_ease.hotel_system.entity;
 
+import com.travel_ease.hotel_system.enums.RoomStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -30,7 +31,8 @@ public class Room {
     private BigDecimal price;
 
     @Column(name = "is_available")
-    private boolean isAvailable;
+    @Enumerated(EnumType.STRING)
+    private RoomStatusEnum status;
 
     @ManyToOne()
     @JoinColumn(name="branch_id")

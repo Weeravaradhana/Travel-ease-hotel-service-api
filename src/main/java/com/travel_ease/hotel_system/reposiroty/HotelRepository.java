@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import java.util.Optional;
 
 public interface HotelRepository extends JpaRepository<Hotel,String> {
 
@@ -17,4 +18,6 @@ public interface HotelRepository extends JpaRepository<Hotel,String> {
           SELECT h FROM Hotel h WHERE h.hotelName LIKE %?1% AND h.activeStatus=true
 """)
     Page<Hotel> searchAllHotels(String searchText,Pageable pageable);
+
+    Optional<Hotel> findByHotelName(String hotelName);
 }

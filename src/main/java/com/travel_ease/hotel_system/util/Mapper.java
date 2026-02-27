@@ -2,8 +2,11 @@ package com.travel_ease.hotel_system.util;
 
 import com.travel_ease.hotel_system.dto.request.HotelRequestDto;
 import com.travel_ease.hotel_system.dto.response.*;
+import com.travel_ease.hotel_system.dto.response.paginate.BranchPaginateResponseDto;
+import com.travel_ease.hotel_system.dto.response.paginate.RoomImagePaginateResponseDto;
 import com.travel_ease.hotel_system.entity.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -39,13 +42,7 @@ public class Mapper {
                 .description(byteCodeHandle.blobToString(selectedHotel.getDescription()))
                 .activeStatus(selectedHotel.isActiveStatus())
                 .startingFrom(selectedHotel.getStartingFrom())
-                .branches(selectedHotel.getBranches().stream().map(e-> {
-                    try {
-                        return toResponseBranchDto(e);
-                    } catch (SQLException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }).collect(Collectors.toList()))
+                .branches(selectedHotel.getBranches().stream().map(this::toResponseBranchDto).collect(Collectors.toList()))
                 .build();
     }
 
@@ -78,7 +75,30 @@ public class Mapper {
                 .build();
     }
 
-    private ResponseRoomImageDto mapImageToDto(RoomImage image) {
+    public RoomImagePaginateResponseDto buildPaginateResponse(Page<RoomImage> imagePage) {
+        List<ResponseRoomImageDto> dataList = imagePage.getContent().stream()
+                .map(this::mapImageToDto)
+                .collect(Collectors.toList());
+
+        return RoomImagePaginateResponseDto.builder()
+                .dataList(dataList)
+                .dataCount(imagePage.getTotalElements())
+                .build();
+    }
+
+    public BranchPaginateResponseDto toBranchPaginateResponseDto(Page<Branch> branchPage){
+        List<ResponseBranchDto> responseList = branchPage.getContent()
+                .stream()
+                .map(this::toResponseBranchDto)
+                .toList();
+
+        return BranchPaginateResponseDto.builder()
+                .dataList(responseList)
+                .dataCount(branchPage.getTotalElements())
+                .build();
+    }
+
+    public ResponseRoomImageDto mapImageToDto(RoomImage image) {
         return ResponseRoomImageDto.builder()
                 .id(image.getId())
                 .directory(fileDataExtractor.byteArrayToString(image.getFileFormatter().getDirectory()))
@@ -97,25 +117,41 @@ public class Mapper {
                 .build();
     }
 
-    private ResponseBranchDto  toResponseBranchDto(Branch selectedBranch) throws SQLException {
+    public ResponseBranchDto toResponseBranchDto(Branch selectedBranch) {
         return ResponseBranchDto.builder()
                 .branchId(selectedBranch.getBranchId())
                 .branchName(selectedBranch.getBranchName())
                 .branchType(selectedBranch.getBranchType())
                 .roomCount(selectedBranch.getRoomCount())
                 .hotelId(selectedBranch.getHotel().getHotelId())
-                .address(toResponseAddressDto(selectedBranch.getAddress()))
+                .address((ResponseAddressDto) toResponseDto(selectedBranch.getAddress()))
                 .build();
     }
 
-    private ResponseAddressDto toResponseAddressDto(Address selectedAddress) {
-        return ResponseAddressDto.builder()
-                .addressId(selectedAddress.getAddressId())
-                .addressLine(selectedAddress.getAddressLine())
-                .city(selectedAddress.getCity())
-                .country(selectedAddress.getCountry())
-                .longitude(selectedAddress.getLongitude())
-                .latitude(selectedAddress.getLatitude())
-                .build();
+    public Object toResponseDto(Object obj) {
+
+        if (obj instanceof Address address) {
+            return ResponseAddressDto.builder()
+                    .addressId(address.getAddressId())
+                    .addressLine(address.getAddressLine())
+                    .city(address.getCity())
+                    .country(address.getCountry())
+                    .longitude(address.getLongitude())
+                    .latitude(address.getLatitude())
+                    .build();
+        }
+
+        if (obj instanceof Branch branch) {
+            return ResponseBranchDto.builder()
+                    .branchId(branch.getBranchId())
+                    .branchName(branch.getBranchName())
+                    .branchType(branch.getBranchType())
+                    .roomCount(branch.getRoomCount())
+                    .hotelId(branch.getHotel().getHotelId())
+                    .build();
+        }
+
+        throw new IllegalArgumentException("Unsupported type: " + obj.getClass());
     }
+
 }

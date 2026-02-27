@@ -25,7 +25,7 @@ public class Branch {
     @Column(name = "branch_type", nullable = false)
     private BranchType branchType;
 
-    @Column(name = "branch_name", nullable = false)
+    @Column(name = "branch_name", nullable = false , unique = true)
     private String branchName;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -4,6 +4,7 @@ import com.travel_ease.hotel_system.dto.request.HotelRequestDto;
 import com.travel_ease.hotel_system.dto.response.ResponseHotelDto;
 import com.travel_ease.hotel_system.dto.response.paginate.HotelPaginateResponseDto;
 import com.travel_ease.hotel_system.entity.Hotel;
+import com.travel_ease.hotel_system.exceptions.AlreadyExistsException;
 import com.travel_ease.hotel_system.exceptions.EntryNotFoundException;
 import com.travel_ease.hotel_system.reposiroty.HotelRepository;
 import com.travel_ease.hotel_system.service.HotelService;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +30,12 @@ public class HotelServiceImpl implements HotelService {
     @Override
     public void create(HotelRequestDto dto) {
         try {
+            Optional<Hotel> byHotelName = hotelRepository.findByHotelName(dto.getHotelName());
+
+            if (byHotelName.isPresent()) {
+                throw new AlreadyExistsException("Hotel already exists");
+            }
+
             Hotel hotel = mapper.toHotel(dto);
             hotelRepository.save(hotel);
         }catch (SQLException e){
